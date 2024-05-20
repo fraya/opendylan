@@ -8,7 +8,7 @@ Introduction
 This document describes the 2014.1 release of Open Dylan, released
 December 29, 2014.
 
-* `Download the release <http://opendylan.org/download/index.html>`_
+* `Download the release <https://opendylan.org/download/index.html>`_
 * `Report bugs <https://github.com/dylan-lang/opendylan/issues>`_
 * `Source code <https://github.com/dylan-lang/opendylan/tree/v2014.1>`_
 
@@ -159,7 +159,7 @@ Common Dylan
 Debugging
 =========
 
-* When using `LLDB <http://lldb.llvm.org/>`_ for debugging, Dylan
+* When using `LLDB <https://lldb.llvm.org/>`_ for debugging, Dylan
   support is now available. To use this, you need to import the
   Python scripts::
 
@@ -283,5 +283,4 @@ Testworks
   forward reference".
 
 * Benchmarks are once again supported.  See the `documentation
-  <http://opendylan.org/documentation/testworks/usage.html>`_ for
-  details.
+  <https://package.opendylan.org/testworks/>`_ for details.
