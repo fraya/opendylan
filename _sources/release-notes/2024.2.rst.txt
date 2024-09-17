@@ -26,6 +26,22 @@ Compiler
 * The build rules for unified executables now properly depend on
   copying included run-time libraries such as libunwind.
 
+* Optimizations that allow the type of ``if`` expressions to be more
+  accurately estimated have been improved. For example, in this
+  function:
+
+  .. code-block::
+
+    define function if-example (arg :: false-or(<integer>)) => (result :: <integer>);
+      min(arg | 20, 30)
+    end;
+
+  the comparison can now be properly inlined because the first
+  argument to :drm:`min` is known to be an :drm:`<integer>`.
+
+* `Issue 1523 <https://github.com/dylan-lang/opendylan/issues/1523>`_, which
+  could result in a compiler abort during code generation, has been fixed.
+
 Tools
 =====
 
@@ -47,12 +63,33 @@ Tools
 Library Updates
 ===============
 
+Dylan
+-----
+
+* The return value of :drm:`push-last` on :drm:`<deque>` now matches
+  that specified in the Dylan Reference Manual.
+
+IO
+----
+
+* The performance of several subclasses of :class:`<wrapper-stream>`
+  has been improved by sealing the :func:`inner-stream` method for
+  each subclass.
+
 System
 ------
 
 * The :const:`$machine-name` constant has been renamed to
   :const:`$machine-architecture`.  The old name will remain, for backward
   compatibility.
+
+Other
+-----
+
+* The :lib:`dispatch-profiler` library is now usable and is
+  documented.
+
+* The obsolete (32-bit x86-only) ``stack-walker`` library was removed.
 
 Contributors
 ============
