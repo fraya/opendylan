@@ -1,11 +1,11 @@
 *****************
-Open Dylan 2024.2
+Open Dylan 2025.1
 *****************
 
-This document describes the 2024.2 release of Open Dylan, released DD
+This document describes the 2025.1 release of Open Dylan, released DD
 MMM, 2024.  The highlights of the release are listed below.  For complete
 details see the `commit logs
-<https://github.com/dylan-lang/opendylan/compare/v2024.1.0...v2024.2.0>`_ for
+<https://github.com/dylan-lang/opendylan/compare/v2024.1.0...v2025.1.0>`_ for
 this release.
 
 .. note:: Some commit logs, for example for testworks and other libraries that
@@ -26,7 +26,7 @@ Compiler
 * The build rules for unified executables now properly depend on
   copying included run-time libraries such as libunwind.
 
-* Optimizations that allow the type of ``if`` expressions to be more
+* Optimizations that allow the type of :drm:`if` expressions to be more
   accurately estimated have been improved. For example, in this
   function:
 
@@ -41,6 +41,13 @@ Compiler
 
 * `Issue 1523 <https://github.com/dylan-lang/opendylan/issues/1523>`_, which
   could result in a compiler abort during code generation, has been fixed.
+
+* A `serious bug <https://github.com/dylan-lang/opendylan/issues/1624>`_ in the parsing
+  of multi-line string literals has been fixed.
+
+* `Issue 1647 <https://github.com/dylan-lang/opendylan/issues/1647>`_,
+  which suppressed error reporting within macro calls in slot
+  initializer expressions, is now fixed.
 
 Tools
 =====
@@ -62,6 +69,14 @@ Tools
 
 Library Updates
 ===============
+
+collections
+-----------
+
+The ``collectors`` module is now `fully documented
+<https://opendylan.org/library-reference/collections/collectors.html>`_, the API has been
+made more consistent, and a bug in :drm:`<list>` collectors has been fixed. See `the pull
+request <https://github.com/dylan-lang/opendylan/pull/1627>`_ for details.
 
 Dylan
 -----
