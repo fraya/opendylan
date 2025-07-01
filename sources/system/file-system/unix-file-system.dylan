@@ -195,13 +195,35 @@ define function %delete-file
 end function %delete-file;
 
 
-/// Whoever heard of an OS that doesn't provide a primitive to copy files?
-/// Why, the creators of UNIX, of course since it doesn't.  We have to resort
-/// to invoking the cp (copy) command via RUN-APPLICATION.
 define function %copy-file
     (source :: <posix-file-system-locator>, destination :: <posix-file-system-locator>,
      #key if-exists :: <copy/rename-disposition> = #"signal")
  => ()
+  local method open-file(locator, flags-mode, flags-create)
+          let file-descriptor
+            = unix-open(as(<string>, locator), flags-mode, flags-create);
+          if (file-descriptor < 0)
+            let errno = unix-errno();
+            if (errno = $e_access)
+              error(make(<invalid-file-permissions-error>,
+                         locator: as(<posix-file-locator>, locator)))
+            else
+              unix-file-error("open", "file %s", as(<string>, locator))
+            end
+          end;
+          file-descriptor
+        end,
+        method open-source-file(filename)
+          let flags-mode   = $O_RDONLY;
+          let flags-create = $O_RDONLY;
+          open-file(filename, flags-mode, flags-create);
+        end,
+        method open-destination-file(filename)
+          let flags-mode   = logior($O_WRONLY, $O_CREAT, $O_TRUNC);
+          let flags-create = logior($S_IRUSR, $S_IWUSR, $S_IWGRP, $S_IROTH);
+          open-file(filename, flags-mode, flags-create);
+        end method;
+
   let source = %expand-pathname(source);
   let destination = %expand-pathname(destination);
   // UNIX strikes again!  The copy command will overwrite its target if
@@ -214,14 +236,54 @@ define function %copy-file
                format-arguments: list(as(<string>, source),
                                       as(<string>, destination))))
   end;
-  run-application
-    (concatenate
-       ("cp -p",
-        " \"",
-        as(<string>, source),
-        "\" \"",
-        as(<string>, destination),
-        "\""))
+
+  let source-fd      :: <integer> = -1;
+  let destination-fd :: <integer> = -1;
+
+  block (copy-done?)
+
+    source-fd      := open-source-file(source);
+    destination-fd := open-destination-file(destination);
+
+    let source-size      = file-property(source, #"size");
+    let destination-size = 0;
+
+    while (#t)
+      let bytes-to-copy :: <integer>
+        = min(source-size - destination-size, $maximum-integer);
+
+      let bytes-written
+        = raw-as-integer
+        (%call-c-function ("system_copy_file_range")
+           (fd-in   :: <raw-c-signed-int>,
+            fd-out  :: <raw-c-signed-int>,
+            size    :: <raw-c-size-t>)
+           => (bytes :: <raw-c-ssize-t>)
+           (integer-as-raw(source-fd),
+            integer-as-raw(destination-fd),
+            integer-as-raw(bytes-to-copy))
+        end);
+
+      if (bytes-written > -1)
+        destination-size := destination-size + bytes-written
+      else
+        unix-copy-file(source-fd, destination-fd);
+        copy-done?(#t);
+      end;
+
+      unless (source-size < destination-size)
+        copy-done?(#t)
+      end;
+    end while;
+
+  cleanup
+    unless (source-fd < 0)
+      unix-close(source-fd)
+    end;
+    unless (destination-fd < 0)
+      unix-close(destination-fd)
+    end;
+  end block;
 end function %copy-file;
 
 

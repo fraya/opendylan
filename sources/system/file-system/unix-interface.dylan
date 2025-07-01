@@ -83,6 +83,23 @@ define function unix-raw-read
   end
 end function unix-raw-read;
 
+define function unix-raw-write
+    (fd :: <integer>, address :: <machine-word>, count :: <integer>)
+ => (result :: <integer>)
+  with-interrupt-repeat
+    raw-as-integer
+      (%call-c-function ("write")
+         (fd :: <raw-c-signed-int>, address :: <raw-pointer>,
+          size :: <raw-c-size-t>)
+         => (result :: <raw-c-ssize-t>)
+         (integer-as-raw(fd),
+          primitive-cast-raw-as-pointer
+            (primitive-unwrap-machine-word(address)),
+          integer-as-raw(count))
+      end)
+  end
+end function unix-raw-write;
+
 /// HIGHER LEVEL INTERFACE
 
 define thread variable *stat-buffer* = make(<byte-vector>, size: $stat-size, fill: as(<byte>, '\0'));
@@ -105,6 +122,31 @@ define function unix-delete-file (path :: <byte-string>) => (ok :: <boolean>)
                             end)
   end = 0;
 end function unix-delete-file;
+
+define function unix-copy-file
+    (in-fd :: <integer>, out-fd :: <integer>, #key buffer-size = $copy-buffer-size)
+ => ()
+  let buffer = make(<buffer>, size: buffer-size);
+  let buffer-address
+    = primitive-wrap-machine-word
+    (primitive-cast-pointer-as-raw
+        (primitive-string-as-raw(buffer)));
+
+  let done? = #f;
+  while (~done?)
+    let bytes-read :: <integer>
+      = unix-raw-read(in-fd, buffer-address, buffer-size);
+    if (bytes-read > 0)
+      let bytes-written :: <integer>
+        = unix-raw-write(out-fd, buffer-address, bytes-read);
+      if (bytes-written < 0)
+        unix-file-error("write", "writing file");
+      end;
+    else
+      done? := #t;
+    end if;
+  end while;
+end function unix-copy-file;
 
 // POSIX lseek whence definitions:
 
@@ -142,3 +184,6 @@ define constant $o_sync
 
 // standard unix error definitions
 define constant $e_access = 13;
+
+// Size of the buffer when copying files
+define constant $copy-buffer-size = 2097152;

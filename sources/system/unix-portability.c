@@ -2,6 +2,8 @@
 #define _DARWIN_C_SOURCE
 #endif
 
+#define _GNU_SOURCE
+
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
@@ -142,4 +144,13 @@ int system_concurrent_thread_count(void)
     return 0;
   }
   return (int) count;
+}
+
+ssize_t system_copy_file_range(int infd, int outfd, size_t len);
+
+ssize_t system_copy_file_range(int infd, int outfd, size_t len)
+{
+  off_t *_Nullable offset = NULL;  // read from file offset adjusted by bytes copied
+  unsigned int flags = 0;          // used for future expansion, currently must be 0
+  return copy_file_range(infd, offset, outfd, offset, len, flags);
 }
